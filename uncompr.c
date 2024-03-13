@@ -7,6 +7,7 @@
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
+#include "zutil.h"
 
 /* ===========================================================================
      Decompresses the source buffer into the destination buffer.  *sourceLen is
@@ -25,7 +26,7 @@
    an incomplete zlib stream.
 */
 int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
-                        uLong *sourceLen) {
+                        uLong *sourceLen, int gzip) {
     z_stream stream;
     int err;
     const uInt max = (uInt)-1;
@@ -48,7 +49,7 @@ int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
 
-    err = inflateInit(&stream);
+    err = inflateInit2(&stream, DEF_WBITS + (gzip ? 16 : 0));
     if (err != Z_OK) return err;
 
     stream.next_out = dest;
@@ -80,6 +81,6 @@ int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
 }
 
 int ZEXPORT uncompress(Bytef *dest, uLongf *destLen, const Bytef *source,
-                       uLong sourceLen) {
-    return uncompress2(dest, destLen, source, &sourceLen);
+                       uLong sourceLen, int gzip) {
+    return uncompress2(dest, destLen, source, &sourceLen, gzip);
 }

@@ -7,6 +7,7 @@
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
+#include "zutil.h"
 
 /* ===========================================================================
      Compresses the source buffer into the destination buffer. The level
@@ -20,7 +21,7 @@
    Z_STREAM_ERROR if the level parameter is invalid.
 */
 int ZEXPORT compress2(Bytef *dest, uLongf *destLen, const Bytef *source,
-                      uLong sourceLen, int level) {
+                      uLong sourceLen, int level, int gzip) {
     z_stream stream;
     int err;
     const uInt max = (uInt)-1;
@@ -33,7 +34,14 @@ int ZEXPORT compress2(Bytef *dest, uLongf *destLen, const Bytef *source,
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
 
-    err = deflateInit(&stream, level);
+    err = deflateInit2 (
+      &stream,
+      level,
+      Z_DEFLATED,
+      MAX_WBITS + (gzip ? 16 : 0),
+      DEF_MEM_LEVEL,
+      Z_DEFAULT_STRATEGY
+    );
     if (err != Z_OK) return err;
 
     stream.next_out = dest;
@@ -62,7 +70,7 @@ int ZEXPORT compress2(Bytef *dest, uLongf *destLen, const Bytef *source,
  */
 int ZEXPORT compress(Bytef *dest, uLongf *destLen, const Bytef *source,
                      uLong sourceLen) {
-    return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION);
+    return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION, 0);
 }
 
 /* ===========================================================================
