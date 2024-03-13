@@ -1287,10 +1287,10 @@ ZEXTERN int ZEXPORT compress_z(Bytef *dest, z_size_t *destLen,
 
 ZEXTERN int ZEXPORT compress2(Bytef *dest, uLongf *destLen,
                               const Bytef *source, uLong sourceLen,
-                              int level);
+                              int level, int gzip);
 ZEXTERN int ZEXPORT compress2_z(Bytef *dest, z_size_t *destLen,
                                 const Bytef *source, z_size_t sourceLen,
-                                int level);
+                                int level, int gzip);
 /*
      Compresses the source buffer into the destination buffer.  The level
    parameter has the same meaning as in deflateInit.  sourceLen is the byte
@@ -1333,9 +1333,11 @@ ZEXTERN int ZEXPORT uncompress_z(Bytef *dest, z_size_t *destLen,
 */
 
 ZEXTERN int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen,
-                                const Bytef *source, uLong *sourceLen);
+                                const Bytef *source, uLong *sourceLen,
+                                int gzip);
 ZEXTERN int ZEXPORT uncompress2_z(Bytef *dest, z_size_t *destLen,
-                                  const Bytef *source, z_size_t *sourceLen);
+                                  const Bytef *source, z_size_t *sourceLen,
+                                  int gzip);
 /*
      Same as uncompress, except that sourceLen is a pointer, where the
    length of the source is *sourceLen.  On return, *sourceLen is the number of

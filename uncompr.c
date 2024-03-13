@@ -7,6 +7,7 @@
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
+#include "zutil.h"
 
 /* ===========================================================================
      Decompresses the source buffer into the destination buffer.  *sourceLen is
@@ -27,7 +28,7 @@
      The _z versions of the functions take size_t length arguments.
 */
 int ZEXPORT uncompress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
-                          z_size_t *sourceLen) {
+                          z_size_t *sourceLen, int gzip) {
     z_stream stream;
     int err;
     const uInt max = (uInt)-1;
@@ -48,7 +49,7 @@ int ZEXPORT uncompress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
 
-    err = inflateInit(&stream);
+    err = inflateInit2(&stream, DEF_WBITS + (gzip ? 16 : 0));
     if (err != Z_OK) return err;
 
     stream.next_out = dest;
@@ -81,10 +82,10 @@ int ZEXPORT uncompress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
            err;
 }
 int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
-                        uLong *sourceLen) {
+                        uLong *sourceLen, int gzip) {
     int ret;
     z_size_t got = *destLen, used = *sourceLen;
-    ret = uncompress2_z(dest, &got, source, &used);
+    ret = uncompress2_z(dest, &got, source, &used, gzip);
     *sourceLen = (uLong)used;
     *destLen = (uLong)got;
     return ret;
@@ -92,10 +93,10 @@ int ZEXPORT uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
 int ZEXPORT uncompress_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
                          z_size_t sourceLen) {
     z_size_t used = sourceLen;
-    return uncompress2_z(dest, destLen, source, &used);
+    return uncompress2_z(dest, destLen, source, &used, 0);
 }
 int ZEXPORT uncompress(Bytef *dest, uLongf *destLen, const Bytef *source,
                        uLong sourceLen) {
     uLong used = sourceLen;
-    return uncompress2(dest, destLen, source, &used);
+    return uncompress2(dest, destLen, source, &used, 0);
 }
