@@ -1,5 +1,5 @@
 /* compress.c -- compress a memory buffer
- * Copyright (C) 1995-2026 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -7,6 +7,7 @@
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
+#include "zutil.h"
 
 /* ===========================================================================
      Compresses the source buffer into the destination buffer. The level
@@ -18,11 +19,10 @@
      compress2 returns Z_OK if success, Z_MEM_ERROR if there was not enough
    memory, Z_BUF_ERROR if there was not enough room in the output buffer,
    Z_STREAM_ERROR if the level parameter is invalid.
-
      The _z versions of the functions take size_t length arguments.
 */
 int ZEXPORT compress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
-                        z_size_t sourceLen, int level) {
+                        z_size_t sourceLen, int level, int gzip) {
     z_stream stream;
     int err;
     const uInt max = (uInt)-1;
@@ -39,7 +39,14 @@ int ZEXPORT compress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
     stream.zfree = (free_func)0;
     stream.opaque = (voidpf)0;
 
-    err = deflateInit(&stream, level);
+    err = deflateInit2 (
+      &stream,
+      level,
+      Z_DEFLATED,
+      MAX_WBITS + (gzip ? 16 : 0),
+      DEF_MEM_LEVEL,
+      Z_DEFAULT_STRATEGY
+    );
     if (err != Z_OK) return err;
 
     stream.next_out = dest;
@@ -64,11 +71,12 @@ int ZEXPORT compress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
     deflateEnd(&stream);
     return err == Z_STREAM_END ? Z_OK : err;
 }
+
 int ZEXPORT compress2(Bytef *dest, uLongf *destLen, const Bytef *source,
-                      uLong sourceLen, int level) {
+                      uLong sourceLen, int level, int gzip) {
     int ret;
     z_size_t got = *destLen;
-    ret = compress2_z(dest, &got, source, sourceLen, level);
+    ret = compress2_z(dest, &got, source, sourceLen, level, gzip);
     *destLen = (uLong)got;
     return ret;
 }
@@ -77,11 +85,11 @@ int ZEXPORT compress2(Bytef *dest, uLongf *destLen, const Bytef *source,
 int ZEXPORT compress_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
                        z_size_t sourceLen) {
     return compress2_z(dest, destLen, source, sourceLen,
-                       Z_DEFAULT_COMPRESSION);
+                       Z_DEFAULT_COMPRESSION, 0);
 }
 int ZEXPORT compress(Bytef *dest, uLongf *destLen, const Bytef *source,
                      uLong sourceLen) {
-    return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION);
+    return compress2(dest, destLen, source, sourceLen, Z_DEFAULT_COMPRESSION, 0);
 }
 
 /* ===========================================================================
